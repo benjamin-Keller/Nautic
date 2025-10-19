@@ -1,0 +1,15 @@
+﻿<span class="@($"px-3 px-2 rounded-full text-sm font-semibold border {GetBadgeClass()}")">
+    @(State == "exited" ? "STOPPED" : State.ToUpper())
+</span>
+
+@code {
+    [Parameter] public string State { get; set; } = "Unknown";
+
+    private string GetBadgeClass() => State.ToLower() switch
+    {
+        "running" => "bg-emerald-900/30 text-emerald-300 border-emerald-500/30",
+        "paused" => "bg-amber-900/30 text-amber-300 border-amber-500/30",
+        "exited" => "bg-rose-900/30 text-rose-300 border-rose-500/30",
+        _ => "bg-slate-800/30 text-slate-300 border-slate-500/30"
+    };
+}
