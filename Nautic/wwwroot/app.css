@@ -27,3 +27,12 @@ body {
     .blazor-error-boundary::after {
         content: "An error has occurred."
     }
+
+.container-card {
+    background: rgba(17, 25, 40, 0.5);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+}

@@ -1,0 +1,46 @@
+﻿@page "/containers"
+@using Docker.DotNet.Models
+@using Nautic.Services
+@using static Nautic.Services.DockerService
+
+<PageTitle>Home</PageTitle>
+
+<div class="grid grid-cols-3 gap-6 p-6">
+    <div class="container-card">
+        
+    </div>
+</div>
+
+<div class="grid grid-cols-4 gap-6 p-6">
+    @foreach (var container in _containers)
+    {
+        <div @key="container.Id" class="container-card">
+            <h3 class="text-lg font-semibold text-white">@container.Name</h3>
+            <StateBadge State="@container.State" />
+
+            <span class="text-sm text-gray-300 flex justify-between">
+                <span>@($"{container.CpuPercent.ToString("N2")}%") CPU</span>
+                <span>@($"{(container.MemoryUsedMb).ToString("N2")} MB / {(container.MemoryTotalMb / 1024).ToString("N2")} GB")</span>
+            </span>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject] public required DockerService DockerService { get; set; }
+    private IEnumerable<ContainerMetrics> _containers => DockerService.CurrentMetrics.Values;
+
+    protected override async Task OnInitializedAsync()
+    {
+        DockerService.StatsUpdated += OnStatsUpdated;
+        await DockerService.StartMonitoringAsync();
+    }
+
+    private void OnStatsUpdated() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        DockerService.StatsUpdated -= OnStatsUpdated;
+        DockerService.StopMonitoring();
+    }
+}

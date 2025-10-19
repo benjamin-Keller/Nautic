@@ -1,4 +1,5 @@
 using Nautic.Components;
+using Nautic.Services;
 
 namespace Nautic
 {
@@ -11,6 +12,8 @@ namespace Nautic
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
+
+            builder.Services.AddScoped<DockerService>();
 
             var app = builder.Build();
 
