@@ -85,3 +85,11 @@ main {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+.nav-item {
+    @apply relative text-gray-300 hover:text-white px-2 py-3 font-medium;
+}
+
+    .nav-item.active {
+        @apply text-white;
+    }
