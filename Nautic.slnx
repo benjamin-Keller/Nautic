@@ -1,3 +1,6 @@
 <Solution>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
   <Project Path="Nautic/Nautic.csproj" />
 </Solution>

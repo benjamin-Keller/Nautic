@@ -1,0 +1,10 @@
+services:
+  nautic:
+    image: ${DOCKER_REGISTRY-}nautic
+    build:
+      context: .
+      dockerfile: Nautic/Dockerfile
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
