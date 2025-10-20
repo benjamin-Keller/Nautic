@@ -14,6 +14,9 @@ namespace Nautic
                 .AddInteractiveServerComponents();
 
             builder.Services.AddScoped<DockerService>();
+            builder.Services.AddSingleton<HardwareService>();
+
+            builder.Services.AddHostedService(provider => provider.GetRequiredService<HardwareService>());
 
             var app = builder.Build();
 

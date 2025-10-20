@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
+    <PackageReference Include="Hardware.Info" Version="101.1.0" />
   </ItemGroup>
 
 </Project>
