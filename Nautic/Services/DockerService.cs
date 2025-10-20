@@ -1,7 +1,6 @@
 ﻿using Docker.DotNet;
 using Docker.DotNet.Models;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Nautic.Services;
@@ -15,23 +14,35 @@ public class DockerService
     public event Action? StatsUpdated;
     private DateTime _lastContainerRefresh = DateTime.MinValue;
     public IReadOnlyDictionary<string, ContainerMetrics> CurrentMetrics => _metrics;
+    private readonly string _dockerUri; 
+    private readonly ILogger<HardwareService> _logger;
 
-    public DockerService()
+    public DockerService(ILogger<HardwareService> logger)
     {
-        var dockerUri = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+        _dockerUri = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "npipe://./pipe/docker_engine"
             : "unix:///var/run/docker.sock";
 
 
-        _client = new DockerClientConfiguration(new Uri(dockerUri), defaultTimeout: TimeSpan.FromMinutes(5)).CreateClient();
+        _client = new DockerClientConfiguration(new Uri(_dockerUri), defaultTimeout: TimeSpan.FromMinutes(5)).CreateClient();
+        _logger = logger;
     }
 
     public async Task<IList<ContainerListResponse>> GetAllContainersAsync()
     {
-        return await _client.Containers.ListContainersAsync(new ContainersListParameters
+        try
         {
-            All = true
-        }, _cts.Token);
+            _logger.LogInformation($"[Docker Info] Retrieving container list");
+            return await _client.Containers.ListContainersAsync(new ContainersListParameters
+            {
+                All = true
+            }, _cts.Token);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"[Docker Error] {ex.Message}\n{ex}", ex);
+            return [];
+        }
     }
 
     public async Task<ContainerListResponse?> GetContainerAsync(string Id)
@@ -52,7 +63,7 @@ public class DockerService
         _ = Task.Run(MonitorDockerEventsAsync);
 
         // Start existing container monitors
-        var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters { All = true });
+        var containers = await GetAllContainersAsync();
         foreach (var c in containers)
         {
             _metrics[c.ID] = new ContainerMetrics
@@ -129,6 +140,10 @@ public class DockerService
                             UpdateContainerState(msg.Actor?.ID, "Running");
                             break;
 
+                        case "kill":
+                            UpdateContainerState(msg.Actor?.ID, "Stopping");
+                            break;
+
                         case "destroy":
                             RemoveContainer(msg.Actor?.ID);
                             break;
@@ -180,8 +195,6 @@ public class DockerService
         _metrics.Remove(id, out _);
     }
 
-
-
     public void StopMonitoring()
     {
         _cts.Cancel();
@@ -197,48 +210,6 @@ public class DockerService
         public double MemoryUsedMb { get; set; }
         public double MemoryTotalMb { get; set; }
     }
-
-    //public async IAsyncEnumerable<(string ContainerId, ContainerStatsResponse Stats)> StreamStatsAsync(CancellationToken cancellationToken)
-    //{
-    //    var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters() { All = false });
-
-    //    await foreach (var (id, stats) in StreamContainerStatsAsync(containers, cancellationToken))
-    //    {
-    //        yield return (id, stats);
-    //    }
-    //}
-
-
-    //public async IAsyncEnumerable<(string containerId, ContainerStatsResponse stats)> StreamContainerStatsAsync(
-    //IEnumerable<ContainerListResponse> containers,
-    //[EnumeratorCancellation] CancellationToken cancellationToken = default)
-    //{
-    //    foreach (var container in containers)
-    //    {
-    //        var channel = Channel.CreateUnbounded<ContainerStatsResponse>();
-
-    //        // Typed progress directly reports ContainerStatsResponse
-    //        var progress = new Progress<ContainerStatsResponse>(stats =>
-    //        {
-    //            channel.Writer.TryWrite(stats);
-    //        });
-
-    //        var task = _client.Containers.GetContainerStatsAsync(
-    //            container.ID,
-    //            new ContainerStatsParameters { Stream = true },
-    //            progress,
-    //            cancellationToken
-    //        );
-
-    //        // Yield each ContainerStatsResponse as it arrives
-    //        await foreach (var stats in channel.Reader.ReadAllAsync(cancellationToken))
-    //        {
-    //            yield return (container.ID, stats);
-    //        }
-
-    //        await task;
-    //    }
-    //}
 }
 
 

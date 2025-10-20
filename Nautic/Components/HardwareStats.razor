@@ -1,0 +1,35 @@
+﻿@using Nautic.Services
+
+<div class="container-card">
+    <h3>CPU Usage</h3>
+    <p>@HardwareService.CurrentStats.CpuUsagePercent.ToString("F1")%</p>
+</div>
+
+<div class="container-card">
+    <h3>Memory</h3>
+    <p>@HardwareService.CurrentStats.MemoryUsedMb.ToString("F0")MB / @HardwareService.CurrentStats.MemoryTotalMb.ToString("F0")MB</p>
+</div>
+
+<div class="container-card">
+    <h3>Disk</h3>
+    <p>@HardwareService.CurrentStats.DiskUsedGb.ToString("F1")GB / @HardwareService.CurrentStats.DiskTotalGb.ToString("F1")GB</p>
+</div>
+
+<div class="container-card">
+    <h3>Network</h3>
+    <p>@HardwareService.CurrentStats.NetworkBytesSent.ToString("F1") MB / @HardwareService.CurrentStats.NetworkBytesReceived.ToString("F1") MB</p>
+</div>
+
+@code {
+    [Inject] public required HardwareService HardwareService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Refresh UI automatically every few seconds
+        while (true)
+        {
+            StateHasChanged();
+            await HardwareService.GetDelay();
+        }
+    }
+}
