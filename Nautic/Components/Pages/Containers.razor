@@ -9,8 +9,17 @@
     <HardwareStats />
 </div>
 
+<div class="flex justify-end">
+    <div class="flex items-center border border-cyan-500 rounded-full overflow-hidden divide-x divide-cyan-500">
+        <span class="px-3 text-cyan-500 hover:bg-cyan-500 hover:text-white cursor-pointer transition-colors @(SelectedFilter == ContainerFilter.Alphabetical ? "bg-cyan-500 text-white" : "")" @onclick="@(_ => SetOrder(ContainerFilter.Alphabetical))">A-Z</span>
+        <span class="px-3 text-cyan-500 hover:bg-cyan-500 hover:text-white cursor-pointer transition-colors @(SelectedFilter == ContainerFilter.CPU ? "bg-cyan-500 text-white" : "")" @onclick="@(_ => SetOrder(ContainerFilter.CPU))">CPU</span>
+        <span class="px-3 text-cyan-500 hover:bg-cyan-500 hover:text-white cursor-pointer transition-colors @(SelectedFilter == ContainerFilter.Memory ? "bg-cyan-500 text-white" : "")" @onclick="@(_ => SetOrder(ContainerFilter.Memory))">Memory</span>
+        <span class="px-3 text-cyan-500 hover:bg-cyan-500 hover:text-white cursor-pointer transition-colors @(SelectedFilter == ContainerFilter.Disk ? "bg-cyan-500 text-white" : "")" @onclick="@(_ => SetOrder(ContainerFilter.Disk))">Disk</span>
+    </div>
+</div>
+
 <div class="grid grid-cols-4 gap-6 p-6">
-    @foreach (var container in _containers)
+    @foreach (var container in _filterableContainers)
     {
         <div @key="container.Id" class="container-card">
             <h3 class="text-lg font-semibold text-white">@container.Name</h3>
@@ -26,7 +35,11 @@
 
 @code {
     [Inject] public required DockerService DockerService { get; set; }
+
+    private ContainerFilter SelectedFilter { get; set; } = ContainerFilter.Alphabetical;
+
     private IEnumerable<ContainerMetrics> _containers => DockerService.CurrentMetrics.Values;
+    private IEnumerable<ContainerMetrics> _filterableContainers = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -34,11 +47,39 @@
         await DockerService.StartMonitoringAsync();
     }
 
-    private void OnStatsUpdated() => InvokeAsync(StateHasChanged);
+    private void OnStatsUpdated()
+    {
+        InvokeAsync(StateHasChanged);
+        SetOrder(SelectedFilter);
+    }
+
+    private void SetOrder(ContainerFilter filter)
+    {
+        if (SelectedFilter != filter)
+            SelectedFilter = filter;
+
+        _filterableContainers = filter switch
+        {
+            ContainerFilter.CPU => _containers.OrderByDescending(e => e.CpuPercent),
+            ContainerFilter.Memory => _containers.OrderByDescending(e => e.MemoryPercent),
+            ContainerFilter.Disk => _containers.OrderByDescending(e => e.DiskTotalMb),
+            ContainerFilter.Alphabetical => _containers.OrderBy(e => e.Name),
+            _ => _containers
+        };
+    }
 
     public void Dispose()
     {
         DockerService.StatsUpdated -= OnStatsUpdated;
         DockerService.StopMonitoring();
+    }
+
+    public enum ContainerFilter
+    {
+        None,
+        Alphabetical,
+        CPU,
+        Memory,
+        Disk
     }
 }
