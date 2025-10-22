@@ -92,6 +92,7 @@ public class DockerService
                 var cache = stats.MemoryStats.Stats?.TryGetValue("cache", out memStats) ?? false;
                 var usedMb = (stats.MemoryStats.Usage - (cache ? memStats : 0UL)) / 1024d / 1024d;
                 var totalMb = stats.MemoryStats.Limit / 1024d / 1024d;
+                var totalDiskMb = stats.StorageStats.ReadCountNormalized;
 
                 _metrics[container.ID] = new ContainerMetrics
                 {
@@ -101,7 +102,8 @@ public class DockerService
                     CpuPercent = cpu,
                     MemoryPercent = memPercent,
                     MemoryUsedMb = usedMb,
-                    MemoryTotalMb = totalMb
+                    MemoryTotalMb = totalMb,
+                    DiskTotalMb = totalDiskMb
                 };
                 StatsUpdated?.Invoke();
             }),
@@ -209,6 +211,7 @@ public class DockerService
         public double MemoryPercent { get; set; }
         public double MemoryUsedMb { get; set; }
         public double MemoryTotalMb { get; set; }
+        public double DiskTotalMb { get; set; }
     }
 }
 
