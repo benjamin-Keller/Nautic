@@ -25,7 +25,7 @@ public class HardwareService : BackgroundService, IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating hardware info");
+                _logger.LogError(ex, "[HW Error] Error updating hardware info");
             }
 
             await GetDelay(stoppingToken);
@@ -67,7 +67,7 @@ public class HardwareService : BackgroundService, IDisposable
             LastUpdated = DateTime.Now
         };
 
-        _logger.LogInformation($"System stats updated: {CurrentStats.CpuUsagePercent:F1}% CPU, {CurrentStats.MemoryUsedMb:F0}/{CurrentStats.MemoryTotalMb:F0}MB RAM");
+        _logger.LogInformation($"[HW Info] System stats updated: {CurrentStats.CpuUsagePercent:F1}% CPU, {CurrentStats.MemoryUsedMb:F0}/{CurrentStats.MemoryTotalMb:F0}MB RAM");
     }
 }
 

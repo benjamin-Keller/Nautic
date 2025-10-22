@@ -22,14 +22,30 @@
 
 @code {
     [Inject] public required HardwareService HardwareService { get; set; }
+    [Parameter] public bool RunAfterInit { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        // Refresh UI automatically every few seconds
+        if (RunAfterInit)
+            return;
+
         while (true)
         {
             StateHasChanged();
             await HardwareService.GetDelay();
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!RunAfterInit)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+            return;
+        }
+
+        await HardwareService.GetDelay();
+        StateHasChanged();
+        
     }
 }
