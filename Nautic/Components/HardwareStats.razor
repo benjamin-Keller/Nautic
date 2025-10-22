@@ -44,10 +44,8 @@
             return;
         }
 
-        while (true)
-        {
-            StateHasChanged();
-            await HardwareService.GetDelay();
-        }
+        await HardwareService.GetDelay();
+        StateHasChanged();
+        
     }
 }
